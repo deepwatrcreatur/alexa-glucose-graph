@@ -1,5 +1,6 @@
 import * as Alexa from "ask-sdk-core";
 import axios from "axios";
+import crypto from "crypto";
 
 const APL_DOCUMENT = {
   type: "APL",
