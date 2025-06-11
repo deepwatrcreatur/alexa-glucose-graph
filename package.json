@@ -1,0 +1,11 @@
+{
+  "name": "alexa-nightscout-skill",
+  "version": "1.0.0",
+  "description": "Nightscout graph skill",
+  "type": "module",
+  "main": "index.mjs",
+  "dependencies": {
+    "ask-sdk-core": "^2.14.0",
+    "axios": "^1.7.2"
+  }
+}
