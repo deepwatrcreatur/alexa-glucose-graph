@@ -2,6 +2,7 @@ import * as Alexa from "ask-sdk-core";
 import axios from "axios";
 import crypto from "crypto";
 
+// A simpler, more robust APL document
 const APL_DOCUMENT = {
   type: "APL",
   version: "2024.2",
@@ -12,25 +13,28 @@ const APL_DOCUMENT = {
         type: "Container",
         width: "100vw",
         height: "100vh",
-        alignItems: "center",
-        justifyContent: "center",
         items: [
           {
             type: "Image",
             source: "${payload.graphUrl}",
             scale: "best-fit",
-            width: "95vw",
-            height: "95vh",
-            align: "center",
+            width: "100%",
+            height: "100%",
           },
           {
             type: "Text",
             text: "Last updated: ${payload.timestamp}",
             position: "absolute",
-            bottom: "8px",
-            right: "24px",
-            color: "gray",
-            fontSize: "24px",
+            bottom: "10px",
+            right: "20px",
+            color: "#FAFAFA",
+            fontSize: "20px",
+            textShadow: {
+              color: "#1E1E1E",
+              radius: "2px",
+              offsetX: "2px",
+              offsetY: "2px",
+            },
           },
         ],
       },
@@ -39,7 +43,6 @@ const APL_DOCUMENT = {
   onMount: [
     {
       type: "AutoPage",
-      componentId: "pager",
       duration: 300000, // Refresh every 5 minutes
     },
   ],
