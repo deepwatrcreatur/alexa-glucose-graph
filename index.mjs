@@ -2,6 +2,9 @@ import * as Alexa from "ask-sdk-core";
 import axios from "axios";
 import https from "https";
 
+// DANGEROUS - ONLY FOR TRUSTED, SELF-SIGNED CERTS
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 // Your APL document is defined here. It includes an AutoPage command
 // to refresh the data every 5 minutes (300000 ms).
 const APL_DOCUMENT_ID = "NightscoutGraphAPL";
