@@ -70,13 +70,18 @@ const DisplayGraphIntentHandler = {
       const apiSecret = process.env.NIGHTSCOUT_API_SECRET;
       const entryCount = 48;
 
+      const hashedSecret = crypto
+        .createHash("sha1")
+        .update(apiSecret)
+        .digest("hex");
+
       const response = await axios.get(
         `${nightscoutUrl}/api/v1/entries.json?count=${entryCount}`,
         {
-          headers: { "api-secret": apiSecret },
+          headers: { "api-secret": hashedSecret },
         },
       );
-
+      
       if (response.data.length === 0) {
         return handlerInput.responseBuilder
           .speak("I couldn't find any recent data in your Nightscout site.")
