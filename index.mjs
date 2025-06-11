@@ -1,5 +1,6 @@
 import * as Alexa from "ask-sdk-core";
 import axios from "axios";
+import https from "https";
 
 // Your APL document is defined here. It includes an AutoPage command
 // to refresh the data every 5 minutes (300000 ms).
@@ -71,13 +72,19 @@ const DisplayGraphIntentHandler = {
       const apiSecret = process.env.NIGHTSCOUT_API_SECRET;
       const entryCount = 48; // Get last 4 hours of data (48 * 5 mins)
 
+      // Create a custom HTTPS agent that ignores self-signed certificate errors
+      const agent = new https.Agent({
+        rejectUnauthorized: false,
+      });
+
       const response = await axios.get(
         `${nightscoutUrl}/api/v1/entries.json?count=${entryCount}`,
         {
           headers: { "api-secret": apiSecret },
+          httpsAgent: agent, // <-- ADD THIS LINE
         },
       );
-
+     
       if (response.data.length === 0) {
         return handlerInput.responseBuilder
           .speak("I couldn't find any recent data in your Nightscout site.")
