@@ -1,13 +1,6 @@
 import * as Alexa from "ask-sdk-core";
 import axios from "axios";
-import https from "https";
 
-// DANGEROUS - ONLY FOR TRUSTED, SELF-SIGNED CERTS
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
-// Your APL document is defined here. It includes an AutoPage command
-// to refresh the data every 5 minutes (300000 ms).
-const APL_DOCUMENT_ID = "NightscoutGraphAPL";
 const APL_DOCUMENT = {
   type: "APL",
   version: "2024.2",
@@ -56,7 +49,6 @@ const LaunchRequestHandler = {
     return Alexa.getRequestType(handlerInput.requestEnvelope) === "LaunchRequest";
   },
   handle(handlerInput) {
-    // When the skill is launched, immediately try to display the graph.
     return DisplayGraphIntentHandler.handle(handlerInput);
   },
 };
@@ -70,36 +62,30 @@ const DisplayGraphIntentHandler = {
   },
   async handle(handlerInput) {
     try {
-      // 1. Fetch data from Nightscout
+      // This line globally disables certificate validation for this run.
+      // Use with caution and only for trusted, self-signed certificates.
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
       const nightscoutUrl = process.env.NIGHTSCOUT_URL;
       const apiSecret = process.env.NIGHTSCOUT_API_SECRET;
-      const entryCount = 48; // Get last 4 hours of data (48 * 5 mins)
-
-      // Create a custom HTTPS agent that ignores self-signed certificate errors
-      const agent = new https.Agent({
-        rejectUnauthorized: false,
-      });
+      const entryCount = 48;
 
       const response = await axios.get(
         `${nightscoutUrl}/api/v1/entries.json?count=${entryCount}`,
         {
           headers: { "api-secret": apiSecret },
-          httpsAgent: agent, // <-- ADD THIS LINE
         },
       );
-     
+
       if (response.data.length === 0) {
         return handlerInput.responseBuilder
           .speak("I couldn't find any recent data in your Nightscout site.")
           .getResponse();
       }
 
-      // 2. Process data for the chart
-      // Data comes in reverse chronological order, so we reverse it.
       const entries = response.data.reverse();
       const sgvData = entries.map((entry) => entry.sgv);
       const labels = entries.map((entry, index) => {
-        // Only label every 6th point (every 30 mins) to avoid clutter
         if (index % 6 === 0) {
           const date = new Date(entry.date);
           return date.toLocaleTimeString("en-US", {
@@ -110,21 +96,19 @@ const DisplayGraphIntentHandler = {
         return "";
       });
 
-      // 3. Build the chart URL using image-charts.com
       const chartConfig = {
-        cht: "lc", // Line chart
-        chs: "800x450", // Chart size
-        chd: `t:${sgvData.join(",")}`, // Chart data
-        chxt: "x,y", // Show X and Y axes
-        chxl: `0:|${labels.join("|")}`, // X-axis labels
-        chxr: "1,40,400", // Y-axis range
-        chg: "0,12.5,1,4", // Grid lines
-        chco: "3498DB", // Line color
-        chls: "3", // Line thickness
-        chm: "o,3498DB,0,-1,5", // Markers on data points
-        // Horizontal lines for target range
-        chm_1: "r,FF0000,0,0.74,0.76", // High line at 180
-        chm_2: "r,00FF00,0,0.24,0.26", // Low line at 70
+        cht: "lc",
+        chs: "800x450",
+        chd: `t:${sgvData.join(",")}`,
+        chxt: "x,y",
+        chxl: `0:|${labels.join("|")}`,
+        chxr: "1,40,400",
+        chg: "0,12.5,1,4",
+        chco: "3498DB",
+        chls: "3",
+        chm: "o,3498DB,0,-1,5",
+        chm_1: "r,FF0000,0,0.74,0.76",
+        chm_2: "r,00FF00,0,0.24,0.26",
       };
 
       const chartUrl = `https://image-charts.com/chart?${new URLSearchParams(
@@ -137,7 +121,6 @@ const DisplayGraphIntentHandler = {
         minute: "2-digit",
       });
 
-      // 4. Send the APL directive to the Echo Show
       if (Alexa.getSupportedInterfaces(handlerInput.requestEnvelope)["Alexa.Presentation.APL"]) {
         handlerInput.responseBuilder.addDirective({
           type: "Alexa.Presentation.APL.RenderDocument",
@@ -151,7 +134,6 @@ const DisplayGraphIntentHandler = {
         });
       }
 
-      // Provide a verbal confirmation
       const latestSgv = lastEntry.sgv;
       const trend = lastEntry.direction;
       const speakOutput = `Your latest reading is ${latestSgv}, trend is ${trend}.`;
@@ -166,7 +148,6 @@ const DisplayGraphIntentHandler = {
   },
 };
 
-// Standard handlers
 const HelpIntentHandler = {
   canHandle(handlerInput) {
     return (
