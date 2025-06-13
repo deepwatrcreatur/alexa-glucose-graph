@@ -12,6 +12,7 @@ The AWS Lambda function relies on the following environmental variables:
 
 - **NIGHTSCOUT_URL**: The URL of your Nightscout instance (e.g., `https://your-nightscout.herokuapp.com`).
 - **NIGHTSCOUT_API_SECRET**: The API secret key for authenticating with your Nightscout instance.
+- **TIMEZONE**: Defaults to UTC (e.g., `America/Toronto`).
 - **UNIT_TYPE**: The unit of measurement for glucose values. Options are:
   - `mmol` (default, case-insensitive)
   - `mgdl` (case-insensitive)
