@@ -35,4 +35,4 @@ Feel free to open issues or submit pull requests to improve the skill. Ensure an
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
