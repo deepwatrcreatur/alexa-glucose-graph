@@ -1,10 +1,10 @@
 # Alexa Nightscout Skill
 
-This Alexa skill retrieves glucose measurements from a Nightscout instance and displays a graph on an Amazon Echo Show.
+This Alexa skill retrieves glucose measurements from a Nightscout instance and displays a table on an Amazon Echo Show.
 
 ## Overview
 
-The skill interfaces with a Nightscout server to fetch real-time glucose data and presents it to users via voice responses and a visual graph on Echo Show devices. It is powered by an AWS Lambda function that processes requests and handles data retrieval.
+The skill interfaces with a Nightscout server to fetch real-time glucose data and presents it to users as a table on Echo Show devices. It is powered by an AWS Lambda function that processes requests and handles data retrieval.
 
 ## Environmental Variables
 
