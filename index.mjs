@@ -2,7 +2,7 @@ import * as Alexa from "ask-sdk-core";
 import axios from "axios";
 import crypto from "crypto";
 
-// APL document with component-based layout
+// APL document with highly customized layout and larger fonts
 const APL_DOCUMENT = {
   type: "APL",
   version: "1.8",
@@ -16,84 +16,142 @@ const APL_DOCUMENT = {
         direction: "column",
         alignItems: "center",
         justifyContent: "start",
-        paddingTop: "20dp",
+        paddingTop: "15dp",
         backgroundColor: "#000000",
         items: [
+          // Row 1: Nightscout Monitor (left) | Updated Time (right)
           {
-            type: "Text",
-            text: "🩸 Nightscout Monitor",
-            fontSize: "32dp",
-            color: "#FFFFFF",
-            textAlign: "center",
-            paddingBottom: "20dp",
+            type: "Container",
+            direction: "row",
+            alignItems: "center",
+            justifyContent: "spaceBetween", // Pushes items to opposite ends
+            paddingBottom: "8dp", // Reduced padding
+            width: "90vw", // Constrain width for alignment
+            items: [
+              {
+                type: "Text",
+                text: "🩸 Nightscout Monitor",
+                fontSize: "26dp", // Slightly smaller for fit
+                color: "#FFFFFF",
+                textAlign: "left",
+                grow: 1,
+              },
+              {
+                type: "Text",
+                text: "Updated: ${data.lastUpdated}", // Updated time
+                fontSize: "26dp", // Same size as title
+                color: "#FFFFFF", // White color as requested
+                textAlign: "right",
+                grow: 1,
+              },
+            ],
           },
+          // Row 2: Current Reading (bold, large, centered) - NOW LINE 2
           {
             type: "Container",
             direction: "row",
             alignItems: "center",
             justifyContent: "center",
-            paddingBottom: "15dp",
+            paddingBottom: "10dp", // Padding below this row
             items: [
               {
                 type: "Text",
-                text: "Current: ",
-                fontSize: "24dp",
-                color: "#CCCCCC",
+                text: "${data.lastReading}", // Current Reading
+                fontSize: "52dp", // STILL EVEN BIGGER
+                color: "#00FF00",
+                fontWeight: "bold",
+                textAlign: "center",
+              },
+            ],
+          },
+          // Row 3: Trend Icon + Time Range (left) | Target Range (center) | Stable/Rising/Falling (right)
+          {
+            type: "Container",
+            direction: "row",
+            alignItems: "center",
+            justifyContent: "spaceBetween", // Space evenly across the line
+            paddingBottom: "15dp", // Padding below this row
+            width: "90vw", // Constrain width for alignment
+            items: [
+              {
+                type: "Text",
+                text: "${data.trendIndicatorIcon} Last ${data.timeRange}", // Icon + Time Range
+                fontSize: "26dp",
+                color: "#FFFFFF",
+                textAlign: "left", // Left-justify
+                width: "30%", // Give it a fixed width
+                shrink: 1,
               },
               {
                 type: "Text",
-                text: "${data.lastReading}",
-                fontSize: "32dp",
-                color: "#00FF00",
-                fontWeight: "bold",
+                text: "${data.targetRangeText}", // Target Range text
+                fontSize: "24dp", // Slightly smaller to fit
+                color: "#CCCCCC",
+                textAlign: "center", // Center-justify
+                width: "40%", // Give it a fixed width
+                shrink: 1,
+              },
+              {
+                type: "Text",
+                text: "${data.trendText}", // Stable/Rising/Falling Text
+                fontSize: "26dp",
+                color: "#FFFF00", // Yellow as requested
+                textAlign: "right", // Right-justify
+                width: "30%", // Give it a fixed width
+                shrink: 1,
               },
             ],
           },
           {
-            type: "Text",
-            text: "${data.trendIndicator}",
-            fontSize: "24dp",
-            color: "#FFFF00",
-            textAlign: "center",
-            paddingBottom: "10dp",
-          },
-          {
-            type: "Text",
-            text: "Updated: ${data.lastUpdated}",
-            fontSize: "18dp",
-            color: "#FFFF00",
-            textAlign: "center",
-            paddingBottom: "20dp",
-          },
-          {
-            type: "Container",
+            type: "Container", // Main data container for readings
             width: "95vw",
-            height: "450dp",
+            height: "580dp", // Adjusted height to accommodate new top rows and larger table
             backgroundColor: "#111111",
             borderWidth: "2dp",
             borderColor: "#333333",
             borderRadius: "10dp",
-            padding: "20dp",
+            paddingTop: "15dp",
+            paddingBottom: "15dp",
+            paddingLeft: "25dp", // Increased horizontal padding
+            paddingRight: "25dp", // Increased horizontal padding
             items: [
-              {
-                type: "Text",
-                text: "📊 Glucose Trend - Last ${data.timeRange}",
-                fontSize: "20dp",
-                color: "#FFFFFF",
-                textAlign: "center",
-                paddingBottom: "20dp",
-              },
               {
                 type: "ScrollView",
                 width: "100%",
-                height: "350dp",
+                grow: 1,
                 items: [
                   {
                     type: "Container",
                     direction: "column",
-                    items: "${data.readingsList}"
-                  }
+                    items: "${data.readingsList}",
+                  },
                 ],
+              },
+            ],
+          },
+          // Legend below the main container
+          {
+            type: "Container",
+            direction: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingTop: "15dp", // Adjusted padding
+            paddingBottom: "15dp", // Adjusted padding
+            items: [
+              {
+                type: "Text",
+                text: "🔺 High   ✅ Normal   🔻 Low",
+                fontSize: "15dp",
+                color: "#FFFFFF",
+                textAlign: "center",
+              },
+              {
+                type: "Text",
+                text: "↗ Rising   → Stable   ↘ Falling",
+                fontSize: "15dp",
+                color: "#FFFF00",
+                textAlign: "center",
+                paddingTop: "5dp",
               },
             ],
           },
@@ -110,63 +168,57 @@ function generateReadingComponents(entries, isMmol, timezone) {
       {
         type: "Text",
         text: "Not enough data available",
-        fontSize: "18dp",
-        color: "#FF0000"
-      }
+        fontSize: "28dp", // Larger error font
+        color: "#FF0000",
+        textAlign: "center",
+      },
     ];
   }
 
-  const recentEntries = entries.slice(-8);
+  const displayEntries = entries.slice(-6); // Keep to 6 entries for max size
   const unit = isMmol ? "mmol/L" : "mg/dL";
   const targetRange = isMmol ? [4, 10] : [80, 180];
 
   let components = [];
-  
-  // Header
-  components.push({
-    type: "Text",
-    text: `TARGET RANGE: ${targetRange[0]}-${targetRange[1]} ${unit}`,
-    fontSize: "16dp",
-    color: "#FFFFFF",
-    textAlign: "center",
-    paddingBottom: "15dp"
-  });
 
   // Each reading as separate component
-  recentEntries.reverse().forEach((entry, index) => {
+  displayEntries.reverse().forEach((entry, reverseIndex) => {
     const value = isMmol ? (entry.sgv / 18).toFixed(1) : entry.sgv;
     const numericValue = isMmol ? entry.sgv / 18 : entry.sgv;
-    
+
     const date = new Date(entry.date);
-    const time = date.toLocaleTimeString("en-US", {
+    // Format time including AM/PM in a single string
+    const formattedTimeWithAmPm = new Intl.DateTimeFormat("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
       timeZone: timezone,
-    });
+    }).format(date);
 
-    // Status
+    // Status indicator and color
     let indicator = "";
     let valueColor = "#00FFFF";
     if (numericValue < targetRange[0]) {
       indicator = "🔻";
-      valueColor = "#FF6B6B";
+      valueColor = "#FF6B6B"; // Reddish for low
     } else if (numericValue > targetRange[1]) {
       indicator = "🔺";
-      valueColor = "#FFB347";
+      valueColor = "#FFB347"; // Orangish for high
     } else {
       indicator = "✅";
-      valueColor = "#90EE90";
+      valueColor = "#90EE90"; // Greenish for normal
     }
 
     // Trend arrow
     let trend = "";
-    if (index > 0) {
-      const prevEntry = recentEntries[recentEntries.length - index];
+    const originalIndex = entries.length - 1 - (displayEntries.length - 1 - reverseIndex);
+
+    if (originalIndex > 0) { // Ensure there is a preceding entry in the full data set
+      const prevEntry = entries[originalIndex - 1];
       const prevValue = isMmol ? prevEntry.sgv / 18 : prevEntry.sgv;
       const diff = numericValue - prevValue;
       const threshold = isMmol ? 0.2 : 4;
-      
+
       if (diff > threshold) trend = " ↗";
       else if (diff < -threshold) trend = " ↘";
       else trend = " →";
@@ -177,69 +229,49 @@ function generateReadingComponents(entries, isMmol, timezone) {
       direction: "row",
       alignItems: "center",
       justifyContent: "spaceBetween",
-      paddingBottom: "8dp",
-      paddingLeft: "10dp",
-      paddingRight: "10dp",
+      paddingBottom: "18dp", // Space between rows
       items: [
         {
-          type: "Text",
-          text: time,
-          fontSize: "16dp",
+          type: "Text", // Now a single Text component for time and AM/PM
+          text: formattedTimeWithAmPm,
+          fontSize: "30dp", // Consistent font size
           color: "#CCCCCC",
-          width: "80dp"
+          textAlign: "left", // Left-aligned
+          width: "120dp", // Adjusted width to fit "H:MM PM" comfortably
         },
         {
           type: "Text",
           text: indicator,
-          fontSize: "18dp",
-          width: "30dp",
-          textAlign: "center"
+          fontSize: "36dp", // Bigger indicators
+          width: "50dp", // Adjusted width
+          textAlign: "center",
         },
         {
           type: "Text",
           text: `${value} ${unit}`,
-          fontSize: "16dp",
+          fontSize: "30dp", // Consistent font size
           color: valueColor,
           textAlign: "right",
-          width: "100dp"
+          width: "170dp", // Adjusted width
         },
         {
           type: "Text",
           text: trend,
-          fontSize: "16dp",
+          fontSize: "30dp", // Consistent font size
           color: "#FFFF00",
-          width: "25dp",
-          textAlign: "center"
-        }
-      ]
+          width: "45dp", // Adjusted width
+          textAlign: "center",
+        },
+      ],
     });
-  });
-
-  // Legend
-  components.push({
-    type: "Text",
-    text: "🔺 High   ✅ Normal   🔻 Low",
-    fontSize: "14dp",
-    color: "#FFFFFF",
-    textAlign: "center",
-    paddingTop: "15dp"
-  });
-
-  components.push({
-    type: "Text",
-    text: "↗ Rising   → Stable   ↘ Falling",
-    fontSize: "14dp",
-    color: "#FFFF00",
-    textAlign: "center",
-    paddingTop: "5dp"
   });
 
   return components;
 }
 
-// Helper function to determine trend
+// Helper function to determine trend (now returns just icon and text)
 function getTrendIndicator(entries, isMmol) {
-  if (entries.length < 2) return "📊 Single Reading";
+  if (entries.length < 2) return { icon: "📊", text: "Single Reading" };
 
   const current = isMmol
     ? entries[entries.length - 1].sgv / 18
@@ -252,11 +284,11 @@ function getTrendIndicator(entries, isMmol) {
   const threshold = isMmol ? 0.3 : 5;
 
   if (diff > threshold) {
-    return "📈 Rising";
+    return { icon: "📈", text: "Rising" };
   } else if (diff < -threshold) {
-    return "📉 Falling";
+    return { icon: "📉", text: "Falling" };
   } else {
-    return "➡️ Stable";
+    return { icon: "➡️", text: "Stable" };
   }
 }
 
@@ -289,7 +321,9 @@ function formatTimeWithTimezone(date, timezone) {
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
-    return Alexa.getRequestType(handlerInput.requestEnvelope) === "LaunchRequest";
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "LaunchRequest"
+    );
   },
   handle(handlerInput) {
     console.log("[LOG] LAUNCH REQUEST HANDLER");
@@ -317,6 +351,13 @@ const DisplayGraphIntentHandler = {
       const unitType = process.env.UNIT_TYPE || "mmol";
       const timezone = process.env.TIMEZONE || "UTC";
 
+      // Determine target range text for display
+      const isMmol = unitType.toLowerCase() === "mmol";
+      const targetRange = isMmol ? [4, 10] : [80, 180];
+      const unit = isMmol ? "mmol/L" : "mg/dL";
+      const targetRangeText = `TARGET: ${targetRange[0]}-${targetRange[1]} ${unit}`;
+
+
       if (!nightscoutUrl || !apiSecret) {
         return handlerInput.responseBuilder
           .addDirective({
@@ -324,44 +365,46 @@ const DisplayGraphIntentHandler = {
             document: APL_DOCUMENT,
             datasources: {
               data: {
-                lastReading: "Configuration Error",
-                trendIndicator: "❌ Setup Required",
-                lastUpdated: "Missing environment variables",
-                timeRange: "Config Error",
+                lastReading: "Config Error",
+                trendIndicatorIcon: "❌",
+                trendText: "Setup Required",
+                lastUpdated: "Missing env vars",
+                timeRange: "",
+                targetRangeText: targetRangeText, // Pass new property
                 readingsList: [
                   {
                     type: "Text",
                     text: "CONFIGURATION REQUIRED:",
-                    fontSize: "18dp",
+                    fontSize: "28dp",
                     color: "#FF0000",
                     textAlign: "center",
-                    paddingBottom: "10dp"
+                    paddingBottom: "10dp",
                   },
                   {
                     type: "Text",
                     text: "• Set NIGHTSCOUT_URL",
-                    fontSize: "16dp",
-                    color: "#FFFF00"
+                    fontSize: "24dp",
+                    color: "#FFFF00",
                   },
                   {
                     type: "Text",
                     text: "• Set NIGHTSCOUT_API_SECRET",
-                    fontSize: "16dp",
-                    color: "#FFFF00"
+                    fontSize: "24dp",
+                    color: "#FFFF00",
                   },
                   {
                     type: "Text",
                     text: "• Set UNIT_TYPE (mmol or mg)",
-                    fontSize: "16dp",
-                    color: "#FFFF00"
+                    fontSize: "24dp",
+                    color: "#FFFF00",
                   },
                   {
                     type: "Text",
                     text: "• Set TIMEZONE",
-                    fontSize: "16dp",
-                    color: "#FFFF00"
-                  }
-                ]
+                    fontSize: "24dp",
+                    color: "#FFFF00",
+                  },
+                ],
               },
             },
           })
@@ -378,7 +421,7 @@ const DisplayGraphIntentHandler = {
         .createHash("sha1")
         .update(apiSecret)
         .digest("hex");
-      const entryCount = 15;
+      const entryCount = 15; // Still fetching enough for trends
 
       let response;
       try {
@@ -397,51 +440,53 @@ const DisplayGraphIntentHandler = {
             datasources: {
               data: {
                 lastReading: "API Error",
-                trendIndicator: "❌ Connection Failed",
+                trendIndicatorIcon: "❌",
+                trendText: "Connection Failed",
                 lastUpdated: "Unable to fetch data",
-                timeRange: "Connection Error",
+                timeRange: "",
+                targetRangeText: targetRangeText, // Pass new property
                 readingsList: [
                   {
                     type: "Text",
                     text: "CONNECTION ERROR:",
-                    fontSize: "18dp",
+                    fontSize: "28dp",
                     color: "#FF0000",
                     textAlign: "center",
-                    paddingBottom: "10dp"
+                    paddingBottom: "10dp",
                   },
                   {
                     type: "Text",
                     text: apiError.message,
-                    fontSize: "14dp",
+                    fontSize: "24dp",
                     color: "#FFFF00",
-                    textAlign: "center"
+                    textAlign: "center",
                   },
                   {
                     type: "Text",
                     text: "Check:",
-                    fontSize: "16dp",
+                    fontSize: "26dp",
                     color: "#FFFFFF",
-                    paddingTop: "10dp"
+                    paddingTop: "10dp",
                   },
                   {
                     type: "Text",
                     text: "• Nightscout URL is correct",
-                    fontSize: "14dp",
-                    color: "#FFFF00"
+                    fontSize: "24dp",
+                    color: "#FFFF00",
                   },
                   {
                     type: "Text",
                     text: "• API secret is valid",
-                    fontSize: "14dp",
-                    color: "#FFFF00"
+                    fontSize: "24dp",
+                    color: "#FFFF00",
                   },
                   {
                     type: "Text",
                     text: "• Internet connection",
-                    fontSize: "14dp",
-                    color: "#FFFF00"
-                  }
-                ]
+                    fontSize: "24dp",
+                    color: "#FFFF00",
+                  },
+                ],
               },
             },
           })
@@ -456,33 +501,35 @@ const DisplayGraphIntentHandler = {
             datasources: {
               data: {
                 lastReading: "No Data",
-                trendIndicator: "❌ No Readings",
+                trendIndicatorIcon: "❌",
+                trendText: "No Readings",
                 lastUpdated: "No recent entries found",
-                timeRange: "No Data",
+                timeRange: "",
+                targetRangeText: targetRangeText, // Pass new property
                 readingsList: [
                   {
                     type: "Text",
                     text: "NO DATA AVAILABLE",
-                    fontSize: "18dp",
+                    fontSize: "28dp",
                     color: "#FF0000",
                     textAlign: "center",
-                    paddingBottom: "10dp"
+                    paddingBottom: "10dp",
                   },
                   {
                     type: "Text",
                     text: "No recent glucose readings found",
-                    fontSize: "16dp",
+                    fontSize: "26dp",
                     color: "#FFFF00",
-                    textAlign: "center"
+                    textAlign: "center",
                   },
                   {
                     type: "Text",
                     text: "in your Nightscout database.",
-                    fontSize: "16dp",
+                    fontSize: "26dp",
                     color: "#FFFF00",
-                    textAlign: "center"
-                  }
-                ]
+                    textAlign: "center",
+                  },
+                ],
               },
             },
           })
@@ -490,14 +537,15 @@ const DisplayGraphIntentHandler = {
       }
 
       const entries = response.data.reverse();
-      const isMmol = unitType.toLowerCase() === "mmol";
+      // isMmol is already defined above
 
       const lastEntry = entries[entries.length - 1];
       const lastReading = isMmol
-        ? `${(lastEntry.sgv / 18).toFixed(1)} mmol/L`
-        : `${lastEntry.sgv} mg/dL`;
+        ? `${(lastEntry.sgv / 18).toFixed(1)} ${unit}`
+        : `${lastEntry.sgv} ${unit}`;
 
-      const trendIndicator = getTrendIndicator(entries, isMmol);
+      // Get trend icon and text
+      const trend = getTrendIndicator(entries, isMmol);
 
       const lastUpdated =
         lastEntry.date && !isNaN(new Date(lastEntry.date).getTime())
@@ -510,7 +558,11 @@ const DisplayGraphIntentHandler = {
       )}h`;
 
       // Generate reading components
-      const readingComponents = generateReadingComponents(entries, isMmol, timezone);
+      const readingComponents = generateReadingComponents(
+        entries,
+        isMmol,
+        timezone
+      );
 
       if (supportedInterfaces["Alexa.Presentation.APL"]) {
         return handlerInput.responseBuilder
@@ -520,17 +572,25 @@ const DisplayGraphIntentHandler = {
             datasources: {
               data: {
                 lastReading: lastReading,
-                trendIndicator: trendIndicator,
+                trendIndicatorIcon: trend.icon, // Pass icon separately
+                trendText: trend.text, // Pass text separately
                 lastUpdated: lastUpdated,
                 timeRange: timeRange,
                 readingsList: readingComponents,
+                targetRangeText: targetRangeText, // Pass new property
               },
             },
           })
+          .withShouldEndSession(false) // KEEP THE SESSION OPEN
           .getResponse();
       }
 
-      return handlerInput.responseBuilder.getResponse();
+      // Fallback for non-APL devices (shouldn't happen on Echo Show but good practice)
+      const speechOutput = `Current glucose is ${lastReading}. Trend is ${trend.text}. Last updated ${lastUpdated}.`;
+      return handlerInput.responseBuilder
+        .speak(speechOutput)
+        .withShouldEndSession(false) // KEEP THE SESSION OPEN
+        .getResponse();
     } catch (error) {
       console.error("[ERROR] DISPLAY GRAPH HANDLER Error:", error.message);
       return handlerInput.responseBuilder
@@ -540,36 +600,39 @@ const DisplayGraphIntentHandler = {
           datasources: {
             data: {
               lastReading: "System Error",
-              trendIndicator: "❌ Error",
+              trendIndicatorIcon: "❌",
+              trendText: "Error",
               lastUpdated: "System malfunction",
-              timeRange: "Error",
+              timeRange: "",
+              targetRangeText: "", // Keep empty on error
               readingsList: [
                 {
                   type: "Text",
                   text: "SYSTEM ERROR",
-                  fontSize: "18dp",
+                  fontSize: "28dp",
                   color: "#FF0000",
                   textAlign: "center",
-                  paddingBottom: "10dp"
+                  paddingBottom: "10dp",
                 },
                 {
                   type: "Text",
                   text: "An unexpected error occurred.",
-                  fontSize: "16dp",
+                  fontSize: "26dp",
                   color: "#FFFF00",
-                  textAlign: "center"
+                  textAlign: "center",
                 },
                 {
                   type: "Text",
                   text: "Please try again later.",
-                  fontSize: "16dp",
+                  fontSize: "26dp",
                   color: "#FFFF00",
-                  textAlign: "center"
-                }
-              ]
+                  textAlign: "center",
+                },
+              ],
             },
           },
         })
+        .withShouldEndSession(false) // KEEP THE SESSION OPEN
         .getResponse();
     }
   },
@@ -583,7 +646,10 @@ const HelpIntentHandler = {
     );
   },
   handle(handlerInput) {
-    return handlerInput.responseBuilder.getResponse();
+    return handlerInput.responseBuilder
+      .speak("You can say, 'Display graph' to see your Nightscout data.")
+      .withShouldEndSession(false)
+      .getResponse();
   },
 };
 
@@ -597,7 +663,10 @@ const CancelAndStopIntentHandler = {
     );
   },
   handle(handlerInput) {
-    return handlerInput.responseBuilder.getResponse();
+    return handlerInput.responseBuilder
+      .speak("Goodbye!")
+      .withShouldEndSession(true)
+      .getResponse();
   },
 };
 
@@ -628,36 +697,39 @@ const ErrorHandler = {
         datasources: {
           data: {
             lastReading: "Handler Error",
-            trendIndicator: "❌ Error",
+            trendIndicatorIcon: "❌",
+            trendText: "Error",
             lastUpdated: "Error in error handler",
-            timeRange: "Error",
+            timeRange: "",
+            targetRangeText: "", // Keep empty on error
             readingsList: [
               {
                 type: "Text",
                 text: "ERROR HANDLER TRIGGERED",
-                fontSize: "18dp",
+                fontSize: "28dp",
                 color: "#FF0000",
                 textAlign: "center",
-                paddingBottom: "10dp"
+                paddingBottom: "10dp",
               },
               {
                 type: "Text",
                 text: "Something went wrong processing",
-                fontSize: "16dp",
+                fontSize: "26dp",
                 color: "#FFFF00",
-                textAlign: "center"
+                textAlign: "center",
               },
               {
                 type: "Text",
                 text: "your request.",
-                fontSize: "16dp",
+                fontSize: "26dp",
                 color: "#FFFF00",
-                textAlign: "center"
-              }
-            ]
+                textAlign: "center",
+              },
+            ],
           },
         },
       })
+      .withShouldEndSession(false) // KEEP THE SESSION OPEN
       .getResponse();
   },
 };
