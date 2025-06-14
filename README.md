@@ -37,3 +37,6 @@ Feel free to open issues or submit pull requests to improve the skill. Ensure an
 ## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
+
+## Support My Work
+If you like my project, consider supporting me on [Ko-fi](https://ko-fi.com/deepwatrcreatur)!
